@@ -1,5 +1,5 @@
 /**
- * Admin — list team members. New users are created in Supabase Auth dashboard.
+ * Admin — list team members.
  */
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
@@ -19,20 +19,6 @@ export function UserManager() {
 
   return (
     <div className="admin-section">
-      <div className="card info-card">
-        <h2>Add new users</h2>
-        <ol>
-          <li>Open your Supabase project → <strong>Authentication</strong> → <strong>Users</strong></li>
-          <li>Click <strong>Add user</strong> → enter email and password</li>
-          <li>The user appears here automatically (profile is created on signup)</li>
-          <li>Assign them to projects in the <strong>Projects</strong> tab</li>
-        </ol>
-        <p className="muted">
-          To make someone an admin, run the admin SQL in Supabase. Tip: disable email confirmation
-          under Authentication → Providers → Email for internal teams.
-        </p>
-      </div>
-
       <div className="card">
         <h2>Team members</h2>
         <table className="data-table">
