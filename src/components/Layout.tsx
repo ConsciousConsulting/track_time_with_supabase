@@ -27,7 +27,7 @@ export function Layout() {
         <div className="sidebar-footer">
           <p className="user-name">{profile?.full_name}</p>
           <p className="user-role">{profile?.role}</p>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => signOut()}>
+          <button type="button" className="btn btn-ghost btn-sm text-white" onClick={() => signOut()}>
             Sign out
           </button>
         </div>
