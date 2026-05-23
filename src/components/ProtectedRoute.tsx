@@ -7,9 +7,11 @@ import { useAuth } from '../context/AuthContext'
 export function ProtectedRoute({
   children,
   adminOnly = false,
+  userOnly = false,
 }: {
   children: React.ReactNode
   adminOnly?: boolean
+  userOnly?: boolean
 }) {
   const { session, profile, loading } = useAuth()
 
@@ -35,6 +37,10 @@ export function ProtectedRoute({
 
   if (adminOnly && profile.role !== 'admin') {
     return <Navigate to="/" replace />
+  }
+
+  if (userOnly && profile.role === 'admin') {
+    return <Navigate to="/admin" replace />
   }
 
   return <>{children}</>

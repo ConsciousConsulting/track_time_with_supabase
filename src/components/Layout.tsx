@@ -10,17 +10,20 @@ export function Layout() {
   return (
     <div className="app-layout">
       <aside className="sidebar">
-        <div className="sidebar-brand">Track Time</div>
+        <div className="sidebar-brand">Conscious Consulting</div>
         <nav className="sidebar-nav">
-          <NavLink to="/" end className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-            Timer
-          </NavLink>
+          {!isAdmin && (
+            <NavLink to="/" end className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+              Timer
+            </NavLink>
+          )}
           {isAdmin && (
             <NavLink
               to="/admin"
+              end
               className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
             >
-              Admin
+              Reports
             </NavLink>
           )}
         </nav>

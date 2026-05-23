@@ -33,7 +33,14 @@ export default function App() {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<TimerPage />} />
+              <Route
+                index
+                element={
+                  <ProtectedRoute userOnly>
+                    <TimerPage />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="admin"
                 element={

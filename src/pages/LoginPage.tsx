@@ -40,7 +40,7 @@ export function LoginPage() {
   return (
     <div className="login-page">
       <form className="login-card" onSubmit={handleSubmit}>
-        <h1>Track Time</h1>
+        <h1>Conscious Consulting</h1>
         <p className="muted">Sign in to start tracking your projects.</p>
 
         {error && <div className="alert alert-error">{error}</div>}
