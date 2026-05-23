@@ -1,15 +1,11 @@
 /**
- * Admin — list users, change roles. New users are created in Supabase Auth dashboard.
+ * Admin — list team members. New users are created in Supabase Auth dashboard.
  */
-import { useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import type { Profile, UserRole } from '../../lib/types'
+import type { Profile } from '../../lib/types'
 
 export function UserManager() {
-  const queryClient = useQueryClient()
-  const [error, setError] = useState<string | null>(null)
-
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
@@ -18,16 +14,6 @@ export function UserManager() {
       return data as Profile[]
     },
   })
-
-  async function updateRole(userId: string, role: UserRole) {
-    setError(null)
-    const { error: err } = await supabase.from('profiles').update({ role }).eq('id', userId)
-    if (err) {
-      setError(err.message)
-      return
-    }
-    await queryClient.invalidateQueries({ queryKey: ['admin-users'] })
-  }
 
   if (isLoading) return <p>Loading users...</p>
 
@@ -42,11 +28,10 @@ export function UserManager() {
           <li>Assign them to projects in the <strong>Projects</strong> tab</li>
         </ol>
         <p className="muted">
-          Tip: disable email confirmation under Authentication → Providers → Email for internal teams.
+          To make someone an admin, run the admin SQL in Supabase. Tip: disable email confirmation
+          under Authentication → Providers → Email for internal teams.
         </p>
       </div>
-
-      {error && <div className="alert alert-error">{error}</div>}
 
       <div className="card">
         <h2>Team members</h2>
@@ -56,7 +41,6 @@ export function UserManager() {
               <th>Name</th>
               <th>Role</th>
               <th>Joined</th>
-              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -67,25 +51,6 @@ export function UserManager() {
                   <span className={`badge badge-${user.role}`}>{user.role}</span>
                 </td>
                 <td>{new Date(user.created_at).toLocaleDateString()}</td>
-                <td>
-                  {user.role === 'admin' ? (
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-ghost"
-                      onClick={() => updateRole(user.id, 'user')}
-                    >
-                      Make user
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className="btn btn-sm"
-                      onClick={() => updateRole(user.id, 'admin')}
-                    >
-                      Make admin
-                    </button>
-                  )}
-                </td>
               </tr>
             ))}
           </tbody>
