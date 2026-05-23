@@ -159,11 +159,17 @@ textarea {
 }
 
 .sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
   background: var(--sidebar-bg);
   color: var(--sidebar-text);
   display: flex;
   flex-direction: column;
   padding: 1.25rem 1rem;
+  overflow-y: auto;
+  z-index: 10;
 }
 
 .sidebar-brand {
@@ -524,6 +530,9 @@ textarea {
   }
 
   .sidebar {
+    position: sticky;
+    top: 0;
+    height: auto;
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
