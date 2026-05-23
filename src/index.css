@@ -206,6 +206,16 @@ textarea {
   opacity: 0.75;
 }
 
+.sidebar-footer .btn-ghost {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.sidebar-footer .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
 .main-content {
   min-width: 0;
 }
