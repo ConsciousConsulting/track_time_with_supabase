@@ -16,11 +16,14 @@ const queryClient = new QueryClient({
   },
 })
 
+// GitHub Pages serves the app from /track_time_with_supabase/ — must match vite.config base
+const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '')
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BrowserRouter>
+        <BrowserRouter basename={routerBasename}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route

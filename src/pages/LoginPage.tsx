@@ -4,6 +4,7 @@
 import { FormEvent, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { isSupabaseConfigured, missingConfigMessage } from '../lib/supabase'
 
 export function LoginPage() {
   const { session, signIn } = useAuth()
@@ -11,6 +12,17 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  if (!isSupabaseConfigured()) {
+    return (
+      <div className="login-page">
+        <div className="login-card">
+          <h1>Configuration error</h1>
+          <div className="alert alert-error">{missingConfigMessage()}</div>
+        </div>
+      </div>
+    )
+  }
 
   if (session) {
     return <Navigate to="/" replace />
