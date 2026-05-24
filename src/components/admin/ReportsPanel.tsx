@@ -38,7 +38,7 @@ export function ReportsPanel() {
       return data as Project[]
     },
   })
-
+  
   const { data: users = [] } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
@@ -47,6 +47,8 @@ export function ReportsPanel() {
       return data as Profile[]
     },
   })
+
+  const reportUsers = users.filter((u) => u.role === 'user')
 
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ['admin-reports', projectId, userId, dateFrom, dateTo],
@@ -118,7 +120,7 @@ export function ReportsPanel() {
             User
             <select value={userId} onChange={(e) => setUserId(e.target.value)}>
               <option value="all">All users</option>
-              {users.map((u) => (
+              {reportUsers.map((u) => (
                 <option key={u.id} value={u.id}>
                   {u.full_name}
                 </option>
