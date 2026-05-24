@@ -9,6 +9,9 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { LoginPage } from './pages/LoginPage'
 import { TimerPage } from './pages/TimerPage'
 import { AdminPage } from './pages/AdminPage'
+import { ReportsPanel } from './components/admin/ReportsPanel'
+import { ProjectManager } from './components/admin/ProjectManager'
+import { UserManager } from './components/admin/UserManager'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,7 +51,12 @@ export default function App() {
                     <AdminPage />
                   </ProtectedRoute>
                 }
-              />
+              >
+                <Route index element={<Navigate to="reports" replace />} />
+                <Route path="reports" element={<ReportsPanel />} />
+                <Route path="projects" element={<ProjectManager />} />
+                <Route path="users" element={<UserManager />} />
+              </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

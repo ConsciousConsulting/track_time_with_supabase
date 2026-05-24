@@ -40,7 +40,7 @@ export function ProtectedRoute({
   }
 
   if (userOnly && profile.role === 'admin') {
-    return <Navigate to="/admin" replace />
+    return <Navigate to="/admin/reports" replace />
   }
 
   return <>{children}</>

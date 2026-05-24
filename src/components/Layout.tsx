@@ -18,13 +18,26 @@ export function Layout() {
             </NavLink>
           )}
           {isAdmin && (
-            <NavLink
-              to="/admin"
-              end
-              className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
-            >
-              Reports
-            </NavLink>
+            <>
+              <NavLink
+                to="/admin/reports"
+                className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+              >
+                Reports
+              </NavLink>
+              <NavLink
+                to="/admin/projects"
+                className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+              >
+                Projects
+              </NavLink>
+              <NavLink
+                to="/admin/users"
+                className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+              >
+                Users
+              </NavLink>
+            </>
           )}
         </nav>
         <div className="sidebar-footer">
