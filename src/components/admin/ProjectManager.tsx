@@ -46,6 +46,8 @@ export function ProjectManager() {
     },
   })
 
+  const assignableUsers = users.filter((user) => user.role === 'user')
+
   async function handleCreateProject(e: FormEvent) {
     e.preventDefault()
     setError(null)
@@ -75,7 +77,10 @@ export function ProjectManager() {
 
   function openAssign(projectId: string) {
     setAssignProjectId(projectId)
-    const memberIds = memberships.filter((m) => m.project_id === projectId).map((m) => m.user_id)
+    const assignableIds = new Set(assignableUsers.map((user) => user.id))
+    const memberIds = memberships
+      .filter((m) => m.project_id === projectId && assignableIds.has(m.user_id))
+      .map((m) => m.user_id)
     setSelectedUserIds(memberIds)
   }
 
@@ -150,7 +155,10 @@ export function ProjectManager() {
           </thead>
           <tbody>
             {projects.map((project) => {
-              const count = memberships.filter((m) => m.project_id === project.id).length
+              const assignableIds = new Set(assignableUsers.map((user) => user.id))
+              const count = memberships.filter(
+                (m) => m.project_id === project.id && assignableIds.has(m.user_id),
+              ).length
               return (
                 <tr key={project.id}>
                   <td>{project.name}</td>
@@ -176,18 +184,22 @@ export function ProjectManager() {
           <div className="modal card">
             <h3>Assign users to project</h3>
             <ul className="checkbox-list">
-              {users.map((user) => (
-                <li key={user.id}>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={selectedUserIds.includes(user.id)}
-                      onChange={() => toggleUser(user.id)}
-                    />
-                    {user.full_name} ({user.role})
-                  </label>
-                </li>
-              ))}
+              {assignableUsers.length === 0 ? (
+                <li className="muted">No users available to assign.</li>
+              ) : (
+                assignableUsers.map((user) => (
+                  <li key={user.id}>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={selectedUserIds.includes(user.id)}
+                        onChange={() => toggleUser(user.id)}
+                      />
+                      {user.full_name}
+                    </label>
+                  </li>
+                ))
+              )}
             </ul>
             <div className="modal-actions">
               <button type="button" className="btn btn-ghost" onClick={() => setAssignProjectId(null)}>
