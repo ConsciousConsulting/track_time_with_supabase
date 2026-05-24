@@ -8,6 +8,7 @@ import { Layout } from './components/Layout'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { LoginPage } from './pages/LoginPage'
 import { TimerPage } from './pages/TimerPage'
+import { UserReportsPage } from './pages/UserReportsPage'
 import { AdminPage } from './pages/AdminPage'
 import { ReportsPanel } from './components/admin/ReportsPanel'
 import { ProjectManager } from './components/admin/ProjectManager'
@@ -41,6 +42,14 @@ export default function App() {
                 element={
                   <ProtectedRoute userOnly>
                     <TimerPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="reports"
+                element={
+                  <ProtectedRoute userOnly>
+                    <UserReportsPage />
                   </ProtectedRoute>
                 }
               />
