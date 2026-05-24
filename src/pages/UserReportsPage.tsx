@@ -10,7 +10,7 @@ export function UserReportsPage() {
   return (
     <div className="user-reports-page">
       <header className="admin-header">
-        <h1>My hours</h1>
+        <h1>Dashboard</h1>
       </header>
       <TimeReportsPanel variant="user" userId={session!.user.id} />
     </div>

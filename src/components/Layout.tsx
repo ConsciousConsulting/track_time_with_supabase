@@ -14,14 +14,14 @@ export function Layout() {
         <nav className="sidebar-nav">
           {!isAdmin && (
             <>
-              <NavLink to="/" end className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-                Timer
-              </NavLink>
               <NavLink
                 to="/reports"
                 className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
               >
-                My hours
+                Dashboard
+              </NavLink>
+              <NavLink to="/" end className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                Timer
               </NavLink>
             </>
           )}
