@@ -360,8 +360,10 @@ textarea {
   gap: 1rem;
 }
 
-.admin-page {
+.admin-page,
+.user-reports-page {
   padding: 1.5rem 2rem 2rem;
+  box-sizing: border-box;
 }
 
 .admin-header {
@@ -579,6 +581,11 @@ textarea {
 
   .timer-body {
     grid-template-columns: 1fr;
+  }
+
+  .admin-page,
+  .user-reports-page {
+    padding: 1rem 1.25rem 1.5rem;
   }
 
   .project-panel {
