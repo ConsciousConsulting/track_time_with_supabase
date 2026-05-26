@@ -22,7 +22,7 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    environment: supabase
+    environment: build
 
     steps:
 
@@ -42,9 +42,9 @@ jobs:
 
         env:
 
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
 
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
 
       - name: Add SPA fallback for GitHub Pages
 
