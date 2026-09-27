@@ -8,6 +8,9 @@
 -- -----------------------------------------------------------------------------
 create type public.user_role as enum ('admin', 'user');
 
+-- Where an employee worked. Null is allowed so older entries stay unchanged.
+create type public.work_location as enum ('home', 'office', 'abroad');
+
 -- -----------------------------------------------------------------------------
 -- 2. Tables
 -- -----------------------------------------------------------------------------
@@ -47,9 +50,16 @@ create table public.time_entries (
   started_at timestamptz not null default now(),
   ended_at timestamptz,
   note text,
+  -- Null on entries logged before this column existed.
+  work_location public.work_location,
+  -- Set by trigger when project, start, end, or note changes. Stopping a timer does not set this.
+  was_edited boolean not null default false,
   created_at timestamptz not null default now(),
   constraint time_entries_valid_range check (
     ended_at is null or ended_at > started_at
+  ),
+  constraint time_entries_note_length check (
+    note is null or char_length(note) <= 2000
   )
 );
 
@@ -63,6 +73,40 @@ create index time_entries_user_id_idx on public.time_entries (user_id);
 create index time_entries_project_id_idx on public.time_entries (project_id);
 create index time_entries_started_at_idx on public.time_entries (started_at desc);
 create index project_members_user_id_idx on public.project_members (user_id);
+
+-- Marks an entry edited only when project, start, end, or note actually changes.
+-- The first time a running timer is stopped (including the note saved with that stop) is not an edit.
+-- The client cannot set or clear this flag.
+create or replace function public.mark_time_entry_edited()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if tg_op = 'INSERT' then
+    new.was_edited := false;
+    return new;
+  end if;
+
+  new.was_edited := coalesce(old.was_edited, false)
+    or new.project_id is distinct from old.project_id
+    or new.started_at is distinct from old.started_at
+    or (old.ended_at is not null and new.ended_at is distinct from old.ended_at)
+    or (
+      new.note is distinct from old.note
+      and (old.ended_at is not null or new.ended_at is null)
+    );
+
+  return new;
+end;
+$$;
+
+revoke all on function public.mark_time_entry_edited() from public;
+revoke all on function public.mark_time_entry_edited() from anon, authenticated;
+
+create trigger time_entries_mark_edited
+  before insert or update on public.time_entries
+  for each row execute function public.mark_time_entry_edited();
 
 -- -----------------------------------------------------------------------------
 -- 3. Auto-create profile when a user signs up
@@ -224,6 +268,20 @@ create policy "Users can start timer on assigned projects"
     )
   );
 
+create policy "Admins can insert time entries"
+  on public.time_entries for insert
+  with check (
+    exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid() and p.role = 'admin'
+    )
+    and exists (
+      select 1 from public.project_members pm
+      where pm.project_id = time_entries.project_id
+        and pm.user_id = time_entries.user_id
+    )
+  );
+
 create policy "Users can update own time entries"
   on public.time_entries for update
   using (user_id = auth.uid())
@@ -231,6 +289,19 @@ create policy "Users can update own time entries"
 
 create policy "Admins can update any time entry"
   on public.time_entries for update
+  using (
+    exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid() and p.role = 'admin'
+    )
+  );
+
+create policy "Users can delete own time entries"
+  on public.time_entries for delete
+  using (user_id = auth.uid());
+
+create policy "Admins can delete any time entry"
+  on public.time_entries for delete
   using (
     exists (
       select 1 from public.profiles p

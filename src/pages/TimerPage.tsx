@@ -12,7 +12,7 @@ import {
   formatDuration,
   startOfTodayIso,
 } from '../lib/format'
-import type { Project, TimeEntry } from '../lib/types'
+import { isWorkLocation, type Project, type TimeEntry, type WorkLocation } from '../lib/types'
 
 interface ProjectToday {
   project: Project
@@ -25,6 +25,7 @@ export function TimerPage() {
   const userId = session!.user.id
 
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
+  const [workLocation, setWorkLocation] = useState<WorkLocation | ''>('')
   const [note, setNote] = useState('')
   const [actionError, setActionError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -121,6 +122,10 @@ export function TimerPage() {
       setActionError('Select a project first.')
       return
     }
+    if (!isWorkLocation(workLocation)) {
+      setActionError('Select where you are working: Home, Office, or Abroad.')
+      return
+    }
     setActionError(null)
     setBusy(true)
 
@@ -128,6 +133,7 @@ export function TimerPage() {
       user_id: userId,
       project_id: selectedProjectId,
       started_at: new Date().toISOString(),
+      work_location: workLocation,
     })
 
     if (error) {
@@ -219,6 +225,24 @@ export function TimerPage() {
           </div>
 
           <label className="note-field">
+            Where are you working?
+            <select
+              value={isRunning ? (activeEntry?.work_location ?? '') : workLocation}
+              onChange={(e) => {
+                const next = e.target.value
+                setWorkLocation(isWorkLocation(next) ? next : '')
+              }}
+              disabled={isRunning}
+              required
+            >
+              <option value="">Select location</option>
+              <option value="home">Home</option>
+              <option value="office">Office</option>
+              <option value="abroad">Abroad</option>
+            </select>
+          </label>
+
+          <label className="note-field">
             What did you work on?
             <textarea
               value={note}
@@ -237,7 +261,7 @@ export function TimerPage() {
                 type="button"
                 className="btn btn-start"
                 onClick={handleStart}
-                disabled={busy || projects.length === 0}
+                disabled={busy || projects.length === 0 || !isWorkLocation(workLocation)}
               >
                 Start
               </button>

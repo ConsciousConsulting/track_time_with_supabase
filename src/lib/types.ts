@@ -3,6 +3,25 @@
  */
 export type UserRole = 'admin' | 'user'
 
+export const WORK_LOCATIONS = ['home', 'office', 'abroad'] as const
+
+export type WorkLocation = (typeof WORK_LOCATIONS)[number]
+
+export const WORK_LOCATION_LABELS: Record<WorkLocation, string> = {
+  home: 'Home',
+  office: 'Office',
+  abroad: 'Abroad',
+}
+
+export function isWorkLocation(value: string): value is WorkLocation {
+  return (WORK_LOCATIONS as readonly string[]).includes(value)
+}
+
+export function workLocationLabel(value: WorkLocation | null | undefined): string {
+  if (!value) return '—'
+  return WORK_LOCATION_LABELS[value]
+}
+
 export interface Profile {
   id: string
   full_name: string
@@ -33,6 +52,8 @@ export interface TimeEntry {
   started_at: string
   ended_at: string | null
   note: string | null
+  work_location: WorkLocation | null
+  was_edited: boolean
   created_at: string
 }
 
