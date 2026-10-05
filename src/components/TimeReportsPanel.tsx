@@ -9,9 +9,10 @@ import { supabase } from '../lib/supabase'
 import {
   downloadCsv,
   durationSeconds,
-  formatDateAndTime,
+  formatDate,
   formatDateTime,
   formatDuration,
+  formatTime,
   fromLocalDateTime,
   toCsv,
   toLocalDateInput,
@@ -216,6 +217,7 @@ export function TimeReportsPanel({ variant, userId }: TimeReportsPanelProps) {
       const base = {
         project: e.projects?.name ?? '',
         where: workLocationLabel(e.work_location),
+        date: formatDate(e.started_at),
         started: formatDateTime(e.started_at),
         ended: e.ended_at ? formatDateTime(e.ended_at) : 'Running',
         duration: formatDuration(durationSeconds(e.started_at, e.ended_at)),
@@ -389,7 +391,7 @@ export function TimeReportsPanel({ variant, userId }: TimeReportsPanelProps) {
     await refreshEntries()
   }
 
-  const columnCount = (isAdmin ? 8 : 7)
+  const columnCount = isAdmin ? 9 : 8
 
   return (
     <div className="admin-section">
@@ -491,6 +493,7 @@ export function TimeReportsPanel({ variant, userId }: TimeReportsPanelProps) {
                   {isAdmin && <th>User</th>}
                   <th>Project</th>
                   <th>Where</th>
+                  <th>Date</th>
                   <th>Started</th>
                   <th>Ended</th>
                   <th>Duration</th>
@@ -509,8 +512,9 @@ export function TimeReportsPanel({ variant, userId }: TimeReportsPanelProps) {
                       </span>
                     </td>
                     <td>{workLocationLabel(entry.work_location)}</td>
-                    <td className="nowrap">{formatDateAndTime(entry.started_at)}</td>
-                    <td className="nowrap">{entry.ended_at ? formatDateAndTime(entry.ended_at) : '—'}</td>
+                    <td className="nowrap">{formatDate(entry.started_at)}</td>
+                    <td className="nowrap">{formatTime(entry.started_at)}</td>
+                    <td className="nowrap">{entry.ended_at ? formatTime(entry.ended_at) : '—'}</td>
                     <td>{formatDuration(durationSeconds(entry.started_at, entry.ended_at))}</td>
                     <td>{entry.note ?? '—'}</td>
                     <td className="actions-cell">

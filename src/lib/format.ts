@@ -39,16 +39,15 @@ export function formatTime(iso: string): string {
   })
 }
 
-/** Short date plus clock time, so a timeline row shows which day it belongs to. */
-export function formatDateAndTime(iso: string): string {
+/** Calendar day for a timeline row. The year is included only when it is not the current year. */
+export function formatDate(iso: string): string {
   const d = new Date(iso)
   const sameYear = d.getFullYear() === new Date().getFullYear()
-  const date = d.toLocaleDateString(undefined, {
+  return d.toLocaleDateString(undefined, {
     day: 'numeric',
     month: 'short',
     year: sameYear ? undefined : 'numeric',
   })
-  return `${date}, ${formatTime(iso)}`
 }
 
 const DATE_INPUT = /^(\d{4})-(\d{2})-(\d{2})$/
