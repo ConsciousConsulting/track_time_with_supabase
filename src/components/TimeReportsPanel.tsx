@@ -9,9 +9,9 @@ import { supabase } from '../lib/supabase'
 import {
   downloadCsv,
   durationSeconds,
+  formatDateAndTime,
   formatDateTime,
   formatDuration,
-  formatTime,
   fromLocalDateTime,
   toCsv,
   toLocalDateInput,
@@ -509,8 +509,8 @@ export function TimeReportsPanel({ variant, userId }: TimeReportsPanelProps) {
                       </span>
                     </td>
                     <td>{workLocationLabel(entry.work_location)}</td>
-                    <td>{formatTime(entry.started_at)}</td>
-                    <td>{entry.ended_at ? formatTime(entry.ended_at) : '—'}</td>
+                    <td className="nowrap">{formatDateAndTime(entry.started_at)}</td>
+                    <td className="nowrap">{entry.ended_at ? formatDateAndTime(entry.ended_at) : '—'}</td>
                     <td>{formatDuration(durationSeconds(entry.started_at, entry.ended_at))}</td>
                     <td>{entry.note ?? '—'}</td>
                     <td className="actions-cell">

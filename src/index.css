@@ -535,6 +535,10 @@ textarea {
   overflow-x: auto;
 }
 
+.nowrap {
+  white-space: nowrap;
+}
+
 .entry-modal {
   width: min(560px, 100%);
 }
