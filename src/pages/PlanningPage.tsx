@@ -19,6 +19,8 @@ import {
 
 const TITLE_MAX = 500
 
+type PlanningQueryKey = readonly ['planning', string, string, string]
+
 export function PlanningPage() {
   const { session } = useAuth()
   const userId = session!.user.id
@@ -36,9 +38,10 @@ export function PlanningPage() {
   const fromKey = toDateKey(monday)
   const toKey = toDateKey(friday)
   const isThisWeek = isSameLocalDay(monday, startOfWeekMonday(new Date()))
+  const queryKey: PlanningQueryKey = ['planning', userId, fromKey, toKey]
 
   const { data: items = [], isLoading } = useQuery({
-    queryKey: ['planning', userId, fromKey, toKey],
+    queryKey,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('planning_items')
@@ -67,28 +70,34 @@ export function PlanningPage() {
     return map
   }, [items, weekDays])
 
-  async function invalidate() {
-    await queryClient.invalidateQueries({ queryKey: ['planning', userId, fromKey, toKey] })
-  }
-
   const addMutation = useMutation({
     mutationFn: async ({ planDate, title }: { planDate: string; title: string }) => {
       const dayItems = itemsByDate[planDate] ?? []
       const sort_order = dayItems.length
-      const { error } = await supabase.from('planning_items').insert({
-        user_id: userId,
-        plan_date: planDate,
-        title,
-        sort_order,
-      })
+      const { data, error } = await supabase
+        .from('planning_items')
+        .insert({
+          user_id: userId,
+          plan_date: planDate,
+          title,
+          sort_order,
+        })
+        .select('id, user_id, plan_date, title, is_done, sort_order, created_at')
+        .single()
       if (error) throw error
+      return data as PlanningItem
     },
-    onSuccess: async (_data, variables) => {
-      setDrafts((prev) => ({ ...prev, [variables.planDate]: '' }))
+    onMutate: async ({ planDate }) => {
       setActionError(null)
-      await invalidate()
+      setDrafts((prev) => ({ ...prev, [planDate]: '' }))
     },
-    onError: (err: Error) => setActionError(err.message),
+    onSuccess: (created) => {
+      queryClient.setQueryData<PlanningItem[]>(queryKey, (prev = []) => [...prev, created])
+    },
+    onError: (err: Error, variables) => {
+      setDrafts((prev) => ({ ...prev, [variables.planDate]: variables.title }))
+      setActionError(err.message)
+    },
   })
 
   const updateMutation = useMutation({
@@ -99,29 +108,65 @@ export function PlanningPage() {
       id: string
       patch: Partial<Pick<PlanningItem, 'title' | 'is_done'>>
     }) => {
-      const { error } = await supabase.from('planning_items').update(patch).eq('id', id).eq('user_id', userId)
+      const { error } = await supabase
+        .from('planning_items')
+        .update(patch)
+        .eq('id', id)
+        .eq('user_id', userId)
       if (error) throw error
     },
-    onSuccess: async () => {
-      setEditingId(null)
-      setEditTitle('')
+    onMutate: async ({ id, patch }) => {
       setActionError(null)
-      await invalidate()
+      await queryClient.cancelQueries({ queryKey })
+      const previous = queryClient.getQueryData<PlanningItem[]>(queryKey)
+      queryClient.setQueryData<PlanningItem[]>(queryKey, (prev = []) =>
+        prev.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+      )
+      if (patch.title !== undefined) {
+        setEditingId(null)
+        setEditTitle('')
+      }
+      return { previous }
     },
-    onError: (err: Error) => setActionError(err.message),
+    onError: (err: Error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKey, context.previous)
+      }
+      setActionError(err.message)
+    },
   })
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('planning_items').delete().eq('id', id).eq('user_id', userId)
+      const { error } = await supabase
+        .from('planning_items')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', userId)
       if (error) throw error
     },
-    onSuccess: async () => {
+    onMutate: async (id) => {
       setActionError(null)
-      await invalidate()
+      await queryClient.cancelQueries({ queryKey })
+      const previous = queryClient.getQueryData<PlanningItem[]>(queryKey)
+      queryClient.setQueryData<PlanningItem[]>(queryKey, (prev = []) =>
+        prev.filter((item) => item.id !== id),
+      )
+      return { previous }
     },
-    onError: (err: Error) => setActionError(err.message),
+    onError: (err: Error, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKey, context.previous)
+      }
+      setActionError(err.message)
+    },
   })
+
+  const pendingItemId =
+    (updateMutation.isPending ? updateMutation.variables?.id : null) ??
+    (deleteMutation.isPending ? deleteMutation.variables : null) ??
+    null
+  const pendingAddDate = addMutation.isPending ? addMutation.variables?.planDate : null
 
   function goPrevWeek() {
     setWeekAnchor((prev) => addDays(startOfWeekMonday(prev), -7))
@@ -174,9 +219,6 @@ export function PlanningPage() {
     updateMutation.mutate({ id, patch: { title } })
   }
 
-  const busy =
-    addMutation.isPending || updateMutation.isPending || deleteMutation.isPending
-
   return (
     <div className="planning-page">
       <header className="planning-header">
@@ -215,89 +257,93 @@ export function PlanningPage() {
           {weekDays.map((day) => {
             const dateKey = toDateKey(day)
             const dayItems = itemsByDate[dateKey] ?? []
+            const addingHere = pendingAddDate === dateKey
             return (
               <section key={dateKey} className="planning-day-card card">
                 <h2 className="planning-day-title">{formatWeekdayCard(day)}</h2>
                 <ul className="planning-item-list">
-                  {dayItems.map((item) => (
-                    <li key={item.id} className={`planning-item ${item.is_done ? 'done' : ''}`}>
-                      {editingId === item.id ? (
-                        <div className="planning-edit-row">
-                          <input
-                            value={editTitle}
-                            onChange={(e) => setEditTitle(e.target.value)}
-                            maxLength={TITLE_MAX}
-                            autoFocus
-                            disabled={busy}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault()
-                                saveEdit(item.id)
-                              }
-                              if (e.key === 'Escape') {
-                                setEditingId(null)
-                                setEditTitle('')
-                              }
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-primary btn-sm"
-                            disabled={busy}
-                            onClick={() => saveEdit(item.id)}
-                          >
-                            Save
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm"
-                            disabled={busy}
-                            onClick={() => {
-                              setEditingId(null)
-                              setEditTitle('')
-                            }}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <>
-                          <label className="planning-item-main">
+                  {dayItems.map((item) => {
+                    const rowBusy = pendingItemId === item.id
+                    return (
+                      <li key={item.id} className={`planning-item ${item.is_done ? 'done' : ''}`}>
+                        {editingId === item.id ? (
+                          <div className="planning-edit-row">
                             <input
-                              type="checkbox"
-                              checked={item.is_done}
-                              disabled={busy}
-                              onChange={() =>
-                                updateMutation.mutate({
-                                  id: item.id,
-                                  patch: { is_done: !item.is_done },
-                                })
-                              }
+                              value={editTitle}
+                              onChange={(e) => setEditTitle(e.target.value)}
+                              maxLength={TITLE_MAX}
+                              autoFocus
+                              disabled={rowBusy}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault()
+                                  saveEdit(item.id)
+                                }
+                                if (e.key === 'Escape') {
+                                  setEditingId(null)
+                                  setEditTitle('')
+                                }
+                              }}
                             />
-                            <span className="planning-item-title">{item.title}</span>
-                          </label>
-                          <div className="planning-item-actions">
+                            <button
+                              type="button"
+                              className="btn btn-primary btn-sm"
+                              disabled={rowBusy}
+                              onClick={() => saveEdit(item.id)}
+                            >
+                              Save
+                            </button>
                             <button
                               type="button"
                               className="btn btn-ghost btn-sm"
-                              disabled={busy}
-                              onClick={() => startEdit(item)}
+                              disabled={rowBusy}
+                              onClick={() => {
+                                setEditingId(null)
+                                setEditTitle('')
+                              }}
                             >
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-danger btn-sm"
-                              disabled={busy}
-                              onClick={() => deleteMutation.mutate(item.id)}
-                            >
-                              Delete
+                              Cancel
                             </button>
                           </div>
-                        </>
-                      )}
-                    </li>
-                  ))}
+                        ) : (
+                          <>
+                            <label className="planning-item-main">
+                              <input
+                                type="checkbox"
+                                checked={item.is_done}
+                                disabled={rowBusy}
+                                onChange={() =>
+                                  updateMutation.mutate({
+                                    id: item.id,
+                                    patch: { is_done: !item.is_done },
+                                  })
+                                }
+                              />
+                              <span className="planning-item-title">{item.title}</span>
+                            </label>
+                            <div className="planning-item-actions">
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-sm"
+                                disabled={rowBusy}
+                                onClick={() => startEdit(item)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-danger btn-sm"
+                                disabled={rowBusy}
+                                onClick={() => deleteMutation.mutate(item.id)}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </li>
+                    )
+                  })}
                 </ul>
                 <div className="planning-add-row">
                   <input
@@ -307,7 +353,7 @@ export function PlanningPage() {
                     }
                     placeholder="Add a task..."
                     maxLength={TITLE_MAX}
-                    disabled={busy}
+                    disabled={addingHere}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault()
@@ -318,7 +364,7 @@ export function PlanningPage() {
                   <button
                     type="button"
                     className="btn btn-primary btn-sm"
-                    disabled={busy}
+                    disabled={addingHere}
                     onClick={() => handleAdd(dateKey)}
                   >
                     Add
