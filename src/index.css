@@ -642,7 +642,7 @@ textarea {
 
 .planning-days {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 1rem;
   align-items: start;
 }
@@ -651,7 +651,6 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  min-height: 220px;
 }
 
 .planning-day-title {
@@ -669,8 +668,11 @@ textarea {
 }
 
 .planning-item {
-  display: grid;
-  gap: 0.35rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
   padding-bottom: 0.55rem;
   border-bottom: 1px solid var(--border);
 }
@@ -682,16 +684,18 @@ textarea {
 
 .planning-item-main {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.55rem;
   font-weight: 500;
   cursor: pointer;
+  flex: 1;
+  min-width: 0;
 }
 
 .planning-item-main input[type='checkbox'] {
   width: 1rem;
   height: 1rem;
-  margin-top: 0.2rem;
+  margin: 0;
   padding: 0;
   flex-shrink: 0;
   cursor: pointer;
@@ -710,7 +714,7 @@ textarea {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
-  padding-left: 1.55rem;
+  flex-shrink: 0;
 }
 
 .planning-edit-row,
@@ -725,12 +729,6 @@ textarea {
 .planning-add-row input {
   flex: 1;
   min-width: 0;
-}
-
-@media (max-width: 1200px) {
-  .planning-days {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 900px) {
@@ -777,10 +775,6 @@ textarea {
   .user-reports-page,
   .planning-page {
     padding: 1rem 1.25rem 1.5rem;
-  }
-
-  .planning-days {
-    grid-template-columns: 1fr;
   }
 
   .project-panel {
