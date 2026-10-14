@@ -75,11 +75,26 @@ create unique index time_entries_one_active_per_user
   on public.time_entries (user_id)
   where ended_at is null;
 
+-- Weekly planning checklist items (one row per task on a calendar day)
+create table public.planning_items (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  plan_date date not null,
+  title text not null,
+  is_done boolean not null default false,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  constraint planning_items_title_length check (
+    char_length(trim(title)) > 0 and char_length(title) <= 500
+  )
+);
+
 -- Performance indexes for admin reports
 create index time_entries_user_id_idx on public.time_entries (user_id);
 create index time_entries_project_id_idx on public.time_entries (project_id);
 create index time_entries_started_at_idx on public.time_entries (started_at desc);
 create index project_members_user_id_idx on public.project_members (user_id);
+create index planning_items_user_date_idx on public.planning_items (user_id, plan_date);
 
 -- Marks an entry edited only when project, start, end, or note actually changes.
 -- The first time a running timer is stopped (including the note saved with that stop) is not an edit.
@@ -146,6 +161,7 @@ alter table public.profiles enable row level security;
 alter table public.projects enable row level security;
 alter table public.project_members enable row level security;
 alter table public.time_entries enable row level security;
+alter table public.planning_items enable row level security;
 
 -- Helper: admin check (inline in policies via subquery)
 
@@ -315,6 +331,28 @@ create policy "Admins can delete any time entry"
       where p.id = auth.uid() and p.role = 'admin'
     )
   );
+
+-- PLANNING ITEMS (personal week plans; each user only sees their own)
+create policy "Users can read own planning items"
+  on public.planning_items for select
+  to authenticated
+  using ((select auth.uid()) = user_id);
+
+create policy "Users can insert own planning items"
+  on public.planning_items for insert
+  to authenticated
+  with check ((select auth.uid()) = user_id);
+
+create policy "Users can update own planning items"
+  on public.planning_items for update
+  to authenticated
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
+
+create policy "Users can delete own planning items"
+  on public.planning_items for delete
+  to authenticated
+  using ((select auth.uid()) = user_id);
 
 -- -----------------------------------------------------------------------------
 -- 5. Create your first admin (run AFTER you sign up in the app once)

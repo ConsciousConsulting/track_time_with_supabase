@@ -23,6 +23,12 @@ export function Layout() {
               <NavLink to="/" end className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
                 Timer
               </NavLink>
+              <NavLink
+                to="/planning"
+                className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+              >
+                Planning
+              </NavLink>
             </>
           )}
           {isAdmin && (
@@ -44,6 +50,12 @@ export function Layout() {
                 className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
               >
                 Users
+              </NavLink>
+              <NavLink
+                to="/planning"
+                className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+              >
+                Planning
               </NavLink>
             </>
           )}

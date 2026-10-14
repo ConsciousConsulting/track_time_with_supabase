@@ -9,6 +9,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { LoginPage } from './pages/LoginPage'
 import { TimerPage } from './pages/TimerPage'
 import { UserReportsPage } from './pages/UserReportsPage'
+import { PlanningPage } from './pages/PlanningPage'
 import { AdminPage } from './pages/AdminPage'
 import { ReportsPanel } from './components/admin/ReportsPanel'
 import { ProjectManager } from './components/admin/ProjectManager'
@@ -53,6 +54,7 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="planning" element={<PlanningPage />} />
               <Route
                 path="admin"
                 element={

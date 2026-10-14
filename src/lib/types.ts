@@ -67,6 +67,17 @@ export interface TimeEntry {
   created_at: string
 }
 
+/** One checklist row on a planning day (plan_date is YYYY-MM-DD). */
+export interface PlanningItem {
+  id: string
+  user_id: string
+  plan_date: string
+  title: string
+  is_done: boolean
+  sort_order: number
+  created_at: string
+}
+
 export interface TimeEntryWithRelations extends TimeEntry {
   profiles: Pick<Profile, 'full_name'> | null
   projects: Pick<Project, 'name'> | null
