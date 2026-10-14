@@ -9,7 +9,14 @@
 create type public.user_role as enum ('admin', 'user');
 
 -- Where an employee worked. Null is allowed so older entries stay unchanged.
-create type public.work_location as enum ('home', 'office', 'abroad');
+create type public.work_location as enum (
+  'home',
+  'office',
+  'abroad',
+  'traveling',
+  'event',
+  'customer''s location'
+);
 
 -- -----------------------------------------------------------------------------
 -- 2. Tables

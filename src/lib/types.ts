@@ -3,7 +3,14 @@
  */
 export type UserRole = 'admin' | 'user'
 
-export const WORK_LOCATIONS = ['home', 'office', 'abroad'] as const
+export const WORK_LOCATIONS = [
+  'home',
+  'office',
+  'abroad',
+  'traveling',
+  'event',
+  "customer's location",
+] as const
 
 export type WorkLocation = (typeof WORK_LOCATIONS)[number]
 
@@ -11,6 +18,9 @@ export const WORK_LOCATION_LABELS: Record<WorkLocation, string> = {
   home: 'Home',
   office: 'Office',
   abroad: 'Abroad',
+  traveling: 'Traveling',
+  event: 'Event',
+  "customer's location": "Customer's location",
 }
 
 export function isWorkLocation(value: string): value is WorkLocation {

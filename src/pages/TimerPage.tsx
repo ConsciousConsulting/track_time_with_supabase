@@ -12,7 +12,14 @@ import {
   formatDuration,
   startOfTodayIso,
 } from '../lib/format'
-import { isWorkLocation, type Project, type TimeEntry, type WorkLocation } from '../lib/types'
+import {
+  WORK_LOCATIONS,
+  WORK_LOCATION_LABELS,
+  isWorkLocation,
+  type Project,
+  type TimeEntry,
+  type WorkLocation,
+} from '../lib/types'
 
 interface ProjectToday {
   project: Project
@@ -123,7 +130,7 @@ export function TimerPage() {
       return
     }
     if (!isWorkLocation(workLocation)) {
-      setActionError('Select where you are working: Home, Office, or Abroad.')
+      setActionError('Select where you are working.')
       return
     }
     setActionError(null)
@@ -236,9 +243,11 @@ export function TimerPage() {
               required
             >
               <option value="">Select location</option>
-              <option value="home">Home</option>
-              <option value="office">Office</option>
-              <option value="abroad">Abroad</option>
+              {WORK_LOCATIONS.map((location) => (
+                <option key={location} value={location}>
+                  {WORK_LOCATION_LABELS[location]}
+                </option>
+              ))}
             </select>
           </label>
 

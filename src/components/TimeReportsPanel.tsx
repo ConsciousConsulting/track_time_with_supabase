@@ -282,10 +282,10 @@ export function TimeReportsPanel({ variant, userId }: TimeReportsPanelProps) {
       return 'Choose a team member.'
     }
     if (editor === 'add' && !isWorkLocation(draft.location)) {
-      return 'Select where the work happened: Home, Office, or Abroad.'
+      return 'Select where the work happened.'
     }
     if (draft.location && !isWorkLocation(draft.location)) {
-      return 'Location must be Home, Office, or Abroad.'
+      return 'Select a valid work location.'
     }
     if (draft.note.trim().length > NOTE_MAX_LENGTH) {
       return `Note must be ${NOTE_MAX_LENGTH} characters or fewer.`
