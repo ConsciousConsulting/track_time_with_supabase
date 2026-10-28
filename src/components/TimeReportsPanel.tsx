@@ -62,6 +62,30 @@ function monthRange(year: number, monthIndex: number): { from: string; to: strin
   return { from: toDateKey(from), to: toDateKey(to) }
 }
 
+/** Sums entry durations for a date range, optionally scoped by user/project. */
+async function fetchPeriodSeconds(opts: {
+  from: string
+  to: string
+  userId?: string
+  projectId: string
+}): Promise<number> {
+  let query = supabase
+    .from('time_entries')
+    .select('started_at, ended_at')
+    .gte('started_at', `${opts.from}T00:00:00.000Z`)
+    .lte('started_at', `${opts.to}T23:59:59.999Z`)
+
+  if (opts.userId) query = query.eq('user_id', opts.userId)
+  if (opts.projectId !== 'all') query = query.eq('project_id', opts.projectId)
+
+  const { data, error } = await query
+  if (error) throw error
+  return (data ?? []).reduce(
+    (sum, entry) => sum + durationSeconds(entry.started_at, entry.ended_at),
+    0,
+  )
+}
+
 interface MembershipRef {
   project_id: string
   user_id: string
@@ -189,6 +213,37 @@ export function TimeReportsPanel({ variant, userId }: TimeReportsPanelProps) {
       return data as TimeEntryWithRelations[]
     },
     enabled: isAdmin || Boolean(userId),
+  })
+
+  const weekBounds = useMemo(() => thisWeekRange(), [])
+  const monthBounds = useMemo(() => {
+    const now = new Date()
+    return monthRange(now.getFullYear(), now.getMonth())
+  }, [])
+  const presetQueryEnabled = isAdmin || Boolean(userId)
+
+  const { data: weekSeconds = 0 } = useQuery({
+    queryKey: ['time-reports', 'preset', 'week', variant, scopedUserId, projectId, weekBounds.from, weekBounds.to],
+    queryFn: () =>
+      fetchPeriodSeconds({
+        from: weekBounds.from,
+        to: weekBounds.to,
+        userId: scopedUserId,
+        projectId,
+      }),
+    enabled: presetQueryEnabled,
+  })
+
+  const { data: monthSeconds = 0 } = useQuery({
+    queryKey: ['time-reports', 'preset', 'month', variant, scopedUserId, projectId, monthBounds.from, monthBounds.to],
+    queryFn: () =>
+      fetchPeriodSeconds({
+        from: monthBounds.from,
+        to: monthBounds.to,
+        userId: scopedUserId,
+        projectId,
+      }),
+    enabled: presetQueryEnabled,
   })
 
   const summary = useMemo(() => {
@@ -507,7 +562,24 @@ export function TimeReportsPanel({ variant, userId }: TimeReportsPanelProps) {
       </div>
 
       <div className="summary-grid">
-        {isAdmin ? (
+        <div className="card">
+          <h3>Total hours</h3>
+          <ul className="summary-list">
+            <li>
+              <span>Selected period</span>
+              <strong>{formatDuration(summary.totalSeconds)}</strong>
+            </li>
+            <li>
+              <span>This week</span>
+              <strong>{formatDuration(weekSeconds)}</strong>
+            </li>
+            <li>
+              <span>This month</span>
+              <strong>{formatDuration(monthSeconds)}</strong>
+            </li>
+          </ul>
+        </div>
+        {isAdmin && (
           <div className="card">
             <h3>Hours by user</h3>
             <ul className="summary-list">
@@ -518,16 +590,6 @@ export function TimeReportsPanel({ variant, userId }: TimeReportsPanelProps) {
                 </li>
               ))}
               {summary.byUser.length === 0 && <li className="muted">No data</li>}
-            </ul>
-          </div>
-        ) : (
-          <div className="card">
-            <h3>Total hours</h3>
-            <ul className="summary-list">
-              <li>
-                <span>Selected period</span>
-                <strong>{formatDuration(summary.totalSeconds)}</strong>
-              </li>
             </ul>
           </div>
         )}
