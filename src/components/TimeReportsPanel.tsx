@@ -28,21 +28,38 @@ import {
   type TimeEntryWithRelations,
   type WorkLocation,
 } from '../lib/types'
+import { addDays, startOfWeekMonday, toDateKey } from '../lib/week'
 
 const NOTE_MAX_LENGTH = 2000
 
+const MONTH_OPTIONS = Array.from({ length: 12 }, (_, monthIndex) => ({
+  value: String(monthIndex),
+  label: new Date(2000, monthIndex, 1).toLocaleString(undefined, { month: 'long' }),
+}))
+
 function todayIsoDate(): string {
-  return new Date().toISOString().slice(0, 10)
+  return toDateKey(new Date())
 }
 
 function weekAgoIsoDate(): string {
-  const d = new Date()
-  d.setDate(d.getDate() - 7)
-  return d.toISOString().slice(0, 10)
+  return toDateKey(addDays(new Date(), -7))
 }
 
 function localToday(): string {
   return toLocalDateInput(new Date().toISOString())
+}
+
+/** Current local week: Monday through Sunday. */
+function thisWeekRange(): { from: string; to: string } {
+  const monday = startOfWeekMonday(new Date())
+  return { from: toDateKey(monday), to: toDateKey(addDays(monday, 6)) }
+}
+
+/** Full calendar month for the given year and 0-based month index. */
+function monthRange(year: number, monthIndex: number): { from: string; to: string } {
+  const from = new Date(year, monthIndex, 1)
+  const to = new Date(year, monthIndex + 1, 0)
+  return { from: toDateKey(from), to: toDateKey(to) }
 }
 
 interface MembershipRef {
@@ -87,6 +104,7 @@ export function TimeReportsPanel({ variant, userId }: TimeReportsPanelProps) {
   const [filterUserId, setFilterUserId] = useState<string>('all')
   const [dateFrom, setDateFrom] = useState(weekAgoIsoDate())
   const [dateTo, setDateTo] = useState(todayIsoDate())
+  const [monthPreset, setMonthPreset] = useState('')
   const [editor, setEditor] = useState<'add' | 'edit' | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState<EntryDraft>(emptyDraft('', ''))
@@ -424,11 +442,63 @@ export function TimeReportsPanel({ variant, userId }: TimeReportsPanelProps) {
           )}
           <label>
             From
-            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => {
+                setMonthPreset('')
+                setDateFrom(e.target.value)
+              }}
+            />
           </label>
           <label>
             To
-            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => {
+                setMonthPreset('')
+                setDateTo(e.target.value)
+              }}
+            />
+          </label>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => {
+              const { from, to } = thisWeekRange()
+              setMonthPreset('')
+              setDateFrom(from)
+              setDateTo(to)
+            }}
+          >
+            This week
+          </button>
+          <label>
+            This month
+            <select
+              value={monthPreset}
+              onChange={(e) => {
+                const value = e.target.value
+                if (value === '') {
+                  setMonthPreset('')
+                  return
+                }
+                const monthIndex = Number(value)
+                if (!Number.isInteger(monthIndex) || monthIndex < 0 || monthIndex > 11) return
+                const { from, to } = monthRange(new Date().getFullYear(), monthIndex)
+                setMonthPreset(value)
+                setDateFrom(from)
+                setDateTo(to)
+              }}
+            >
+              <option value="">Select month</option>
+              {MONTH_OPTIONS.map((month) => (
+                <option key={month.value} value={month.value}>
+                  {month.label}
+                </option>
+              ))}
+            </select>
           </label>
           <button type="button" className="btn btn-primary" onClick={exportCsv}>
             CSV Export
